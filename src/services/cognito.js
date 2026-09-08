@@ -1,6 +1,7 @@
 import {
   CognitoUserPool,
   CognitoUser,
+  CognitoRefreshToken,
   AuthenticationDetails,
   CognitoUserAttribute,
 } from "amazon-cognito-identity-js";
@@ -92,6 +93,14 @@ const userPool = new CognitoUserPool({
   Storage: memoryStorage,
 });
 
+const keyPrefix = () =>
+  `CognitoIdentityServiceProvider.${config.cognito.userPoolClientId}`;
+
+const lastAuthUserKey = () => `${keyPrefix()}.LastAuthUser`;
+
+const refreshTokenKey = (username) =>
+  `${keyPrefix()}.${username}.refreshToken`;
+
 const buildUser = (email) =>
   new CognitoUser({
     Username: email,
@@ -172,18 +181,39 @@ export function signOut() {
 }
 
 /**
- * Devuelve la sesión válida actual (refrescándola con el refreshToken si hace
- * falta) o `null` si no hay ninguna.
+ * Devuelve la sesión válida actual, o `null` si no hay ninguna.
+ *
+ * OJO: no usamos `cognitoUser.getSession()`. Ese método aborta con
+ * "Local storage is missing an ID Token" cuando el idToken no está en el
+ * storage, y nunca llega a la rama que usaría el refreshToken. Como aquí el
+ * idToken vive solo en memoria (se pierde al recargar), hay que pedir el
+ * refresco a mano con `refreshSession`.
  */
 export function getCurrentSession() {
   return new Promise((resolve) => {
-    const cognitoUser = userPool.getCurrentUser();
-    if (!cognitoUser) return resolve(null);
+    const username = memoryStorage.getItem(lastAuthUserKey());
+    if (!username) return resolve(null);
 
-    cognitoUser.getSession((err, session) => {
-      if (err || !session || !session.isValid()) return resolve(null);
-      resolve(sessionToTokens(session));
-    });
+    const cognitoUser = buildUser(username);
+
+    // Si ya tenemos una sesión viva en memoria, no hace falta ir a la red.
+    const cached = cognitoUser.getSignInUserSession?.();
+    if (cached && cached.isValid()) return resolve(sessionToTokens(cached));
+
+    const refreshToken = memoryStorage.getItem(refreshTokenKey(username));
+    if (!refreshToken) return resolve(null);
+
+    cognitoUser.refreshSession(
+      new CognitoRefreshToken({ RefreshToken: refreshToken }),
+      (err, session) => {
+        if (err || !session || !session.isValid()) {
+          // Refresh token caducado o revocado: limpiamos para no reintentar.
+          memoryStorage.clear();
+          return resolve(null);
+        }
+        resolve(sessionToTokens(session));
+      }
+    );
   });
 }
 

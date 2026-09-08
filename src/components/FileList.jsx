@@ -1,5 +1,5 @@
 import Button from "./Button.jsx";
-import FileIcon from "./FileIcon.jsx";
+import FileIcon, { isImage } from "./FileIcon.jsx";
 
 function formatDate(value) {
   if (!value) return "—";
@@ -44,12 +44,43 @@ function SkeletonRows() {
   );
 }
 
+/** Miniatura: imagen real si ya tenemos su URL firmada, si no el ícono. */
+function Thumbnail({ file, previewUrl, onOpen }) {
+  if (!isImage(file.fileType, file.fileName)) {
+    return <FileIcon fileType={file.fileType} fileName={file.fileName} />;
+  }
+
+  if (!previewUrl) {
+    return (
+      <div className="h-10 w-10 shrink-0 animate-pulse rounded-lg bg-slate-200" />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      title="Ver imagen"
+      className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-slate-200 transition hover:ring-2 hover:ring-blue-300"
+    >
+      <img
+        src={previewUrl}
+        alt={file.fileName}
+        loading="lazy"
+        className="h-full w-full object-cover"
+      />
+    </button>
+  );
+}
+
 export default function FileList({
   files,
   loading,
   onDownload,
   onDelete,
   busyFileId,
+  previewUrls = {},
+  onPreview,
 }) {
   if (loading) return <SkeletonRows />;
   if (!files.length) return <EmptyState />;
@@ -71,7 +102,11 @@ export default function FileList({
               className="grid grid-cols-1 gap-3 px-5 py-4 transition hover:bg-slate-50 sm:grid-cols-[1fr_180px_200px] sm:items-center sm:gap-4"
             >
               <div className="flex min-w-0 items-center gap-3">
-                <FileIcon fileType={file.fileType} fileName={file.fileName} />
+                <Thumbnail
+                  file={file}
+                  previewUrl={previewUrls[file.fileId]}
+                  onOpen={() => onPreview?.(file)}
+                />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-slate-900">
                     {file.fileName}

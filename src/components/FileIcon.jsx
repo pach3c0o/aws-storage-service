@@ -41,3 +41,10 @@ export default function FileIcon({ fileType, fileName, className = "" }) {
     </div>
   );
 }
+
+export function isImage(fileType = "", fileName = "") {
+  return (
+    (fileType || "").startsWith("image/") ||
+    /\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i.test(fileName || "")
+  );
+}
