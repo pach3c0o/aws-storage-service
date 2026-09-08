@@ -49,15 +49,19 @@ export default function ConfirmSignUp() {
 
   return (
     <AuthLayout
+      index="03 / Verificación"
       title="Verifica tu email"
-      subtitle="Introduce el código de 6 dígitos que te enviamos"
+      subtitle="Introduce el código de 6 dígitos que acabamos de enviarte."
       footer={
-        <Link to="/login" className="font-medium text-blue-600 hover:underline">
-          Volver al login
+        <Link
+          to="/login"
+          className="text-ink underline decoration-ink/30 underline-offset-4 transition hover:decoration-ink"
+        >
+          Volver al inicio de sesión
         </Link>
       }
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-7">
         <Field
           label="Email"
           type="email"
@@ -69,18 +73,20 @@ export default function ConfirmSignUp() {
         <Field
           label="Código de verificación"
           inputMode="numeric"
-          placeholder="123456"
+          placeholder="000000"
+          maxLength={6}
+          className="font-mono"
           value={code}
           onChange={(e) => setCode(e.target.value)}
           required
         />
         <ErrorMessage>{error}</ErrorMessage>
-        <Button type="submit" loading={loading} className="mt-2 w-full">
+        <Button type="submit" loading={loading} className="mt-1 w-full">
           Confirmar cuenta
         </Button>
         <Button
           type="button"
-          variant="secondary"
+          variant="ghost"
           loading={resending}
           onClick={handleResend}
           className="w-full"

@@ -1,28 +1,35 @@
 export default function UploadProgress({ fileName, progress, previewUrl }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-      {previewUrl && (
-        <img
-          src={previewUrl}
-          alt={fileName}
-          className="h-14 w-14 shrink-0 rounded-lg border border-blue-200 bg-white object-cover"
-        />
-      )}
-
-      <div className="min-w-0 flex-1">
-        <div className="mb-2 flex items-center justify-between gap-4 text-sm">
-          <span className="truncate font-medium text-blue-900">
-            Subiendo {fileName}
-          </span>
-          <span className="shrink-0 tabular-nums text-blue-700">
-            {progress}%
-          </span>
-        </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-blue-100">
-          <div
-            className="h-full rounded-full bg-blue-600 transition-[width] duration-200"
-            style={{ width: `${progress}%` }}
+    <div className="reveal border-y border-ink/15 py-5">
+      <div className="flex items-center gap-5">
+        {previewUrl ? (
+          <img
+            src={previewUrl}
+            alt={fileName}
+            className="h-14 w-14 shrink-0 object-cover grayscale"
           />
+        ) : (
+          <div className="h-14 w-14 shrink-0 border border-ink/20" />
+        )}
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-4">
+            <p className="truncate text-sm">
+              <span className="label mr-3 text-ink/40">Subiendo</span>
+              {fileName}
+            </p>
+            <span className="shrink-0 font-mono text-2xl leading-none tabular-nums">
+              {String(progress).padStart(2, "0")}
+              <span className="text-ink/35">%</span>
+            </span>
+          </div>
+
+          <div className="mt-4 h-px w-full bg-ink/15">
+            <div
+              className="h-px bg-ink transition-[width] duration-200 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
       </div>
     </div>

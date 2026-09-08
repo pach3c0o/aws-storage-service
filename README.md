@@ -1,4 +1,4 @@
-# Drive — Frontend (React + Vite + Cognito + S3)
+# Archivo — Frontend (React + Vite + Cognito + S3)
 
 Gestor de archivos tipo Google Drive que consume un backend serverless en AWS
 (API Gateway + Lambda + S3), con autenticación Cognito.
@@ -78,12 +78,23 @@ Recuerda también añadir el dominio de Amplify a las callback URLs del App
 Client de Cognito y, cuando el backend deje de usar `Access-Control-Allow-Origin: *`,
 incluirlo en la lista de orígenes permitidos.
 
+## Diseño
+
+Sistema monocromo (tinta `#0d0d0c` sobre papel `#f4f3ef`), sin color y sin
+esquinas redondeadas. Tres tipografías: Instrument Serif para los títulos,
+Archivo para el texto e IBM Plex Mono para etiquetas y metadatos. Los tokens
+viven en el bloque `@theme` de `src/index.css`, así que para cambiar la paleta
+o las fuentes solo hay que tocar ese archivo.
+
+Las miniaturas se muestran en escala de grises y recuperan su color al pasar
+el cursor; el visor a pantalla completa siempre las enseña en color.
+
 ## Estructura
 
 ```
 src/
-  components/   LoginForm, SignUpForm, ConfirmSignUp, Header,
-                FileList, FileUploadButton, UploadProgress, FileIcon, ...
+  components/   LoginForm, SignUpForm, ConfirmSignUp, Header, FileList,
+                FileUploadButton, UploadProgress, ImagePreview, FileIcon, ...
   context/      AuthContext (sesión + tokens), ToastContext (avisos)
   hooks/        useApi (inyecta el idToken y maneja 401/403)
   pages/        DrivePage

@@ -163,23 +163,27 @@ export default function DrivePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="grain min-h-screen bg-paper">
       <Header />
 
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <main className="mx-auto max-w-6xl px-6 pb-24 pt-12 lg:px-10 lg:pt-16">
+        <div className="flex flex-wrap items-end justify-between gap-8">
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">Mis archivos</h1>
-            <p className="text-sm text-slate-500">
-              {loading
-                ? "Cargando…"
-                : `${files.length} ${files.length === 1 ? "archivo" : "archivos"}`}
-            </p>
+            <p className="label reveal text-ink/40">Índice general</p>
+            <h1
+              className="reveal mt-3 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-[0.95]"
+              style={{ animationDelay: "60ms" }}
+            >
+              Mis archivos
+            </h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div
+            className="reveal flex items-center gap-6"
+            style={{ animationDelay: "120ms" }}
+          >
             <Button
-              variant="secondary"
+              variant="ghost"
               onClick={() => refresh()}
               disabled={loading || Boolean(upload)}
             >
@@ -189,8 +193,22 @@ export default function DrivePage() {
           </div>
         </div>
 
+        <div
+          className="rule-in mt-10 flex items-baseline justify-between gap-6 border-t border-ink pt-3"
+          style={{ animationDelay: "200ms" }}
+        >
+          <span className="label text-ink/45">
+            {loading
+              ? "Cargando"
+              : `${files.length} ${files.length === 1 ? "elemento" : "elementos"}`}
+          </span>
+          <span className="label hidden text-ink/30 sm:inline">
+            s3-media-uploads
+          </span>
+        </div>
+
         {upload && (
-          <div className="mb-4">
+          <div className="mt-8">
             <UploadProgress
               fileName={upload.fileName}
               progress={upload.progress}
@@ -200,20 +218,22 @@ export default function DrivePage() {
         )}
 
         {error && (
-          <div className="mb-4">
+          <div className="mt-8">
             <ErrorMessage>{error}</ErrorMessage>
           </div>
         )}
 
-        <FileList
-          files={files}
-          loading={loading}
-          busyFileId={busyFileId}
-          previewUrls={previewUrls}
-          onPreview={setLightbox}
-          onDownload={handleDownload}
-          onDelete={handleDelete}
-        />
+        <div className="mt-8">
+          <FileList
+            files={files}
+            loading={loading}
+            busyFileId={busyFileId}
+            previewUrls={previewUrls}
+            onPreview={setLightbox}
+            onDownload={handleDownload}
+            onDelete={handleDelete}
+          />
+        </div>
       </main>
 
       <ImagePreview

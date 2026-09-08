@@ -7,11 +7,12 @@ import DrivePage from "./pages/DrivePage.jsx";
 
 function FullScreenLoader() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50">
-      <div className="flex flex-col items-center gap-3">
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-        <p className="text-sm text-slate-500">Comprobando sesión…</p>
+    <div className="grain flex min-h-screen flex-col items-center justify-center gap-5 bg-paper">
+      <span className="font-display text-3xl">Archivo</span>
+      <div className="h-px w-24 overflow-hidden bg-ink/15">
+        <div className="h-px w-1/3 animate-[reveal_1.1s_ease-in-out_infinite_alternate] bg-ink" />
       </div>
+      <p className="label text-ink/40">Comprobando sesión</p>
     </div>
   );
 }

@@ -2,10 +2,10 @@ import { createContext, useCallback, useContext, useMemo, useState } from "react
 
 const ToastContext = createContext(null);
 
-const STYLES = {
-  success: "bg-emerald-600",
-  error: "bg-rose-600",
-  info: "bg-slate-800",
+const LABELS = {
+  success: "OK",
+  error: "Error",
+  info: "Aviso",
 };
 
 export function ToastProvider({ children }) {
@@ -36,17 +36,18 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="pointer-events-none fixed bottom-6 right-6 z-50 flex w-full max-w-sm flex-col gap-2">
+      <div className="pointer-events-none fixed bottom-8 right-6 z-[60] flex w-full max-w-sm flex-col gap-2.5 lg:right-10">
         {toasts.map((toast) => (
           <button
             key={toast.id}
             type="button"
             onClick={() => dismiss(toast.id)}
-            className={`pointer-events-auto rounded-lg px-4 py-3 text-left text-sm font-medium text-white shadow-lg transition ${
-              STYLES[toast.type] ?? STYLES.info
-            }`}
+            className="reveal pointer-events-auto flex gap-4 bg-ink px-5 py-4 text-left text-sm leading-snug text-paper shadow-[0_18px_40px_-18px_rgba(0,0,0,0.6)] transition hover:bg-ink/90"
           >
-            {toast.message}
+            <span className="label mt-0.5 shrink-0 text-paper/45">
+              {LABELS[toast.type] ?? LABELS.info}
+            </span>
+            <span className="min-w-0 flex-1">{toast.message}</span>
           </button>
         ))}
       </div>

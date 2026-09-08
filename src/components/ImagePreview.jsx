@@ -1,14 +1,19 @@
 import { useEffect } from "react";
 
-/** Lightbox para ver una imagen a tamaño completo. */
+/** Visor a pantalla completa. Fondo en tinta, la imagen recupera su color. */
 export default function ImagePreview({ file, url, onClose }) {
   useEffect(() => {
+    if (!file) return undefined;
     const onKey = (event) => {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [file, onClose]);
 
   if (!file) return null;
 
@@ -18,36 +23,35 @@ export default function ImagePreview({ file, url, onClose }) {
       aria-modal="true"
       aria-label={file.fileName}
       onClick={onClose}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-slate-900/80 p-6 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex flex-col bg-ink/95 backdrop-blur-sm"
     >
+      <div className="flex shrink-0 items-baseline justify-between gap-6 border-b border-paper/15 px-6 py-5 lg:px-10">
+        <p className="truncate text-sm text-paper">
+          <span className="label mr-3 text-paper/40">Vista</span>
+          {file.fileName}
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="label shrink-0 text-paper/60 underline decoration-paper/25 underline-offset-4 transition hover:text-paper hover:decoration-paper"
+        >
+          Cerrar · Esc
+        </button>
+      </div>
+
       <div
         onClick={(event) => event.stopPropagation()}
-        className="flex max-h-full w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+        className="flex flex-1 items-center justify-center overflow-auto p-6 lg:p-12"
       >
-        <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-3">
-          <p className="truncate text-sm font-medium text-slate-900">
-            {file.fileName}
-          </p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg px-2.5 py-1 text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          >
-            Cerrar
-          </button>
-        </div>
-
-        <div className="flex min-h-[200px] items-center justify-center bg-slate-50 p-4">
-          {url ? (
-            <img
-              src={url}
-              alt={file.fileName}
-              className="max-h-[70vh] w-auto max-w-full rounded-lg object-contain"
-            />
-          ) : (
-            <span className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-          )}
-        </div>
+        {url ? (
+          <img
+            src={url}
+            alt={file.fileName}
+            className="reveal max-h-full w-auto max-w-full object-contain"
+          />
+        ) : (
+          <span className="h-6 w-6 animate-spin rounded-full border border-paper/50 border-t-transparent" />
+        )}
       </div>
     </div>
   );

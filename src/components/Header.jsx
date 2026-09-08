@@ -1,33 +1,30 @@
 import { useAuth } from "../context/AuthContext.jsx";
-import Button from "./Button.jsx";
 
 export default function Header() {
   const { user, signOut } = useAuth();
   const email = user?.email ?? "";
-  const initial = email.charAt(0).toUpperCase() || "?";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white">
-            D
-          </div>
-          <span className="text-lg font-semibold text-slate-900">Mi Drive</span>
+    <header className="sticky top-0 z-30 border-b border-ink/12 bg-paper/85 backdrop-blur-md">
+      <div className="mx-auto flex h-[72px] max-w-6xl items-baseline justify-between gap-6 px-6 lg:px-10">
+        <div className="flex items-baseline gap-4">
+          <span className="font-display text-2xl leading-none">Archivo</span>
+          <span className="label hidden text-ink/35 sm:inline">
+            us-east-2
+          </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden items-center gap-2.5 sm:flex">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600">
-              {initial}
-            </div>
-            <span className="max-w-[200px] truncate text-sm text-slate-600">
-              {email}
-            </span>
-          </div>
-          <Button variant="secondary" onClick={signOut} className="px-3 py-2">
-            Cerrar sesión
-          </Button>
+        <div className="flex items-baseline gap-5">
+          <span className="hidden max-w-[220px] truncate font-mono text-xs text-ink/45 sm:inline">
+            {email}
+          </span>
+          <button
+            type="button"
+            onClick={signOut}
+            className="label text-ink/55 underline decoration-ink/25 underline-offset-4 transition hover:text-ink hover:decoration-ink"
+          >
+            Salir
+          </button>
         </div>
       </div>
     </header>

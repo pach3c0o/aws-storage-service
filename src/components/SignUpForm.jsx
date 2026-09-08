@@ -38,18 +38,22 @@ export default function SignUpForm() {
 
   return (
     <AuthLayout
+      index="02 / Registro"
       title="Crea tu cuenta"
-      subtitle="Te enviaremos un código de verificación por email"
+      subtitle="Te enviaremos un código de verificación por email."
       footer={
         <>
           ¿Ya tienes cuenta?{" "}
-          <Link to="/login" className="font-medium text-blue-600 hover:underline">
+          <Link
+            to="/login"
+            className="text-ink underline decoration-ink/30 underline-offset-4 transition hover:decoration-ink"
+          >
             Inicia sesión
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-7">
         <Field
           label="Email"
           type="email"
@@ -80,7 +84,7 @@ export default function SignUpForm() {
           required
         />
         <ErrorMessage>{error}</ErrorMessage>
-        <Button type="submit" loading={loading} className="mt-2 w-full">
+        <Button type="submit" loading={loading} className="mt-1 w-full">
           Crear cuenta
         </Button>
       </form>
