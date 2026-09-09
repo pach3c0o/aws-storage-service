@@ -40,7 +40,7 @@ export default function LoginForm() {
 
   return (
     <AuthLayout
-      index="01 / Acceso"
+      step={1}
       title="Inicia sesión"
       subtitle="Introduce tus credenciales para abrir el archivo."
       footer={
@@ -48,14 +48,14 @@ export default function LoginForm() {
           ¿No tienes cuenta?{" "}
           <Link
             to="/signup"
-            className="text-ink underline decoration-ink/30 underline-offset-4 transition hover:decoration-ink"
+            className="rounded-[3px] text-signal transition-opacity hover:opacity-75"
           >
             Regístrate
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <Field
           label="Email"
           type="email"
