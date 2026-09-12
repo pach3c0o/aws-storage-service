@@ -1,14 +1,23 @@
 const VARIANTS = {
+  /* Acción principal: el único relleno en color de señal de toda la app. */
   primary:
-    "bg-ink text-paper hover:bg-ink/85 disabled:bg-ink/25 disabled:text-paper/70",
+    "bg-signal text-void font-semibold hover:bg-signal/90 active:translate-y-px disabled:bg-edge disabled:text-faint",
   secondary:
-    "border border-ink/25 text-ink hover:border-ink hover:bg-ink hover:text-paper disabled:border-ink/15 disabled:text-ink/30 disabled:hover:bg-transparent disabled:hover:text-ink/30",
+    "border border-edge text-text hover:border-dim hover:bg-raise active:translate-y-px disabled:border-line disabled:text-faint",
   ghost:
-    "text-ink/55 hover:text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink disabled:text-ink/25",
+    "text-dim hover:text-text hover:bg-raise active:translate-y-px disabled:text-faint disabled:hover:bg-transparent",
+  danger:
+    "border border-alert/40 text-alert hover:bg-alert hover:text-void hover:border-alert active:translate-y-px",
+};
+
+const SIZES = {
+  sm: "h-8 px-3 text-[12.5px]",
+  md: "h-10 px-4 text-[13.5px]",
 };
 
 export default function Button({
   variant = "primary",
+  size = "md",
   className = "",
   loading = false,
   children,
@@ -18,10 +27,10 @@ export default function Button({
     <button
       {...props}
       disabled={props.disabled || loading}
-      className={`label inline-flex items-center justify-center gap-2.5 px-5 py-3.5 transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed ${VARIANTS[variant]} ${className}`}
+      className={`inline-flex select-none items-center justify-center gap-2 rounded-[3px] leading-none tracking-[-0.005em] transition-[background-color,border-color,color,transform] duration-150 disabled:cursor-not-allowed disabled:active:translate-y-0 ${SIZES[size]} ${VARIANTS[variant]} ${className}`}
     >
       {loading && (
-        <span className="h-3 w-3 animate-spin rounded-full border border-current border-t-transparent" />
+        <span className="h-3 w-3 shrink-0 animate-spin rounded-full border border-current border-t-transparent" />
       )}
       {children}
     </button>

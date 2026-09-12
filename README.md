@@ -1,4 +1,4 @@
-# Archivo — Frontend (React + Vite + Cognito + S3)
+# Bahía — Frontend (React + Vite + Cognito + S3)
 
 Gestor de archivos tipo Google Drive que consume un backend serverless en AWS
 (API Gateway + Lambda + S3), con autenticación Cognito.
@@ -80,23 +80,60 @@ incluirlo en la lista de orígenes permitidos.
 
 ## Diseño
 
-Sistema monocromo (tinta `#0d0d0c` sobre papel `#f4f3ef`), sin color y sin
-esquinas redondeadas. Tres tipografías: Instrument Serif para los títulos,
-Archivo para el texto e IBM Plex Mono para etiquetas y metadatos. Los tokens
-viven en el bloque `@theme` de `src/index.css`, así que para cambiar la paleta
-o las fuentes solo hay que tocar ese archivo.
+Panel de instrumentos oscuro: grafito frío (`#0b0c0e`) con texto cálido y un
+único color de señal, el ámbar `#f0b429`, reservado para el estado activo (la
+acción principal, la ubicación seleccionada, la barra de progreso, el foco de
+teclado). El rojo `#e0574f` sólo aparece en errores y en el borrado. El fondo
+oscuro no es sólo estética: la app previsualiza imágenes, y sobre grafito se
+juzgan mejor que sobre papel.
 
-Las miniaturas se muestran en escala de grises y recuperan su color al pasar
-el cursor; el visor a pantalla completa siempre las enseña en color.
+Dos tipografías, con papeles separados:
+
+- **Familjen Grotesk** para la interfaz: una grotesca con carácter, legible a
+  tamaños pequeños.
+- **Spline Sans Mono** para todo lo que es dato tabulable — tamaños, fechas,
+  tipos, contadores, identificadores. Va con `tabular-nums` y cero con barra,
+  así que las columnas se alinean solas.
+
+Los tokens (colores y familias) viven en el bloque `@theme` de `src/index.css`;
+`.mono` y `.tag` son las dos únicas utilidades tipográficas de la casa.
+
+## Layout
+
+La vista principal es un armazón de aplicación, no una columna de lectura:
+
+- **Columna izquierda fija** (`Rail`, 248 px): identidad, región, ubicación
+  actual, resumen del contenido por tipo y espacio en disco, y el botón de
+  subida anclado abajo. Bajo `lg` se reduce a una barra superior (`MobileBar`).
+- **Barra de herramientas fija**: título, contador `visibles/total`, filtro por
+  nombre, conmutador lista/rejilla y recarga.
+- **Área central**: sólo la tabla. En lista es una rejilla de seis columnas
+  (n.º, nombre, tipo, tamaño, fecha, acciones) con cabeceras ordenables; en
+  rejilla, tarjetas con miniatura. La vista elegida se recuerda en
+  `localStorage`.
+
+Interacciones que sustituyen a las anteriores:
+
+- **Arrastrar y soltar** sobre el área central sube archivos; el botón acepta
+  selección múltiple y la cola se procesa en serie (un fallo no cancela el resto).
+- **Borrado en dos toques dentro de la propia fila**, en lugar del
+  `window.confirm` del navegador.
+- El **tamaño** se lee de `size`, `fileSize` o `contentLength` (lo que devuelva
+  el backend) y se muestra un guion si no viene ninguno.
+
+La animación se limita a una entrada escalonada rápida de las filas y a las
+transiciones de estado; todo se desactiva con `prefers-reduced-motion`.
 
 ## Estructura
 
 ```
 src/
-  components/   LoginForm, SignUpForm, ConfirmSignUp, Header, FileList,
-                FileUploadButton, UploadProgress, ImagePreview, FileIcon, ...
+  components/   LoginForm, SignUpForm, ConfirmSignUp, AuthLayout, Rail (+MobileBar),
+                FileList, FileUploadButton, UploadProgress, ImagePreview,
+                FileIcon, Backdrop, Button, Field, ErrorMessage
   context/      AuthContext (sesión + tokens), ToastContext (avisos)
   hooks/        useApi (inyecta el idToken y maneja 401/403)
+  lib/          format.js (bytes, fechas, tamaño defensivo)
   pages/        DrivePage
   services/     cognito.js, api.js
   config.js

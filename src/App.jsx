@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import Backdrop from "./components/Backdrop.jsx";
 import ConfirmSignUp from "./components/ConfirmSignUp.jsx";
 import LoginForm from "./components/LoginForm.jsx";
 import SignUpForm from "./components/SignUpForm.jsx";
@@ -7,12 +8,16 @@ import DrivePage from "./pages/DrivePage.jsx";
 
 function FullScreenLoader() {
   return (
-    <div className="grain flex min-h-screen flex-col items-center justify-center gap-5 bg-paper">
-      <span className="font-display text-3xl">Archivo</span>
-      <div className="h-px w-24 overflow-hidden bg-ink/15">
-        <div className="h-px w-1/3 animate-[reveal_1.1s_ease-in-out_infinite_alternate] bg-ink" />
-      </div>
-      <p className="label text-ink/40">Comprobando sesión</p>
+    <div className="flex min-h-screen flex-col items-center justify-center gap-5">
+      <Backdrop />
+      <span
+        aria-hidden
+        className="grid h-8 w-8 place-items-center rounded-[3px] bg-signal text-[17px] font-bold leading-none text-void"
+      >
+        B
+      </span>
+      <div className="relative h-[3px] w-32 overflow-hidden rounded-full bg-line sweep" />
+      <p className="tag text-faint">Comprobando sesión</p>
     </div>
   );
 }

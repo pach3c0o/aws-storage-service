@@ -1,6 +1,7 @@
 import { useEffect } from "react";
+import { formatBytes, formatDate, sizeOf } from "../lib/format.js";
 
-/** Visor a pantalla completa. Fondo en tinta, la imagen recupera su color. */
+/** Visor a pantalla completa: la imagen sobre el fondo más oscuro posible. */
 export default function ImagePreview({ file, url, onClose }) {
   useEffect(() => {
     if (!file) return undefined;
@@ -23,34 +24,37 @@ export default function ImagePreview({ file, url, onClose }) {
       aria-modal="true"
       aria-label={file.fileName}
       onClick={onClose}
-      className="fixed inset-0 z-50 flex flex-col bg-ink/95 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex flex-col bg-[#050506]/95 backdrop-blur-sm"
     >
-      <div className="flex shrink-0 items-baseline justify-between gap-6 border-b border-paper/15 px-6 py-5 lg:px-10">
-        <p className="truncate text-sm text-paper">
-          <span className="label mr-3 text-paper/40">Vista</span>
-          {file.fileName}
-        </p>
+      <div className="flex shrink-0 items-center justify-between gap-6 border-b border-line px-4 py-3 lg:px-6">
+        <div className="min-w-0">
+          <p className="truncate text-[14px] leading-tight">{file.fileName}</p>
+          <p className="mono mt-1 text-[11px] text-faint">
+            {file.fileType || "desconocido"} · {formatBytes(sizeOf(file))} ·{" "}
+            {formatDate(file.createdAt)}
+          </p>
+        </div>
         <button
           type="button"
           onClick={onClose}
-          className="label shrink-0 text-paper/60 underline decoration-paper/25 underline-offset-4 transition hover:text-paper hover:decoration-paper"
+          className="shrink-0 rounded-[3px] px-2 py-1 text-[12.5px] text-dim transition-colors hover:bg-raise hover:text-text"
         >
-          Cerrar · Esc
+          Cerrar <span className="mono ml-1 text-faint">esc</span>
         </button>
       </div>
 
       <div
         onClick={(event) => event.stopPropagation()}
-        className="flex flex-1 items-center justify-center overflow-auto p-6 lg:p-12"
+        className="flex flex-1 items-center justify-center overflow-auto p-4 lg:p-10"
       >
         {url ? (
           <img
             src={url}
             alt={file.fileName}
-            className="reveal max-h-full w-auto max-w-full object-contain"
+            className="max-h-full w-auto max-w-full object-contain"
           />
         ) : (
-          <span className="h-6 w-6 animate-spin rounded-full border border-paper/50 border-t-transparent" />
+          <span className="h-5 w-5 animate-spin rounded-full border border-dim border-t-transparent" />
         )}
       </div>
     </div>
