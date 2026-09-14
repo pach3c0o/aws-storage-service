@@ -1,16 +1,58 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import Button from "../components/Button.jsx";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Backdrop from "../components/Backdrop.jsx";
 import ErrorMessage from "../components/ErrorMessage.jsx";
 import FileList from "../components/FileList.jsx";
-import FileUploadButton from "../components/FileUploadButton.jsx";
-import Header from "../components/Header.jsx";
+import Rail, { MobileBar } from "../components/Rail.jsx";
 import ImagePreview from "../components/ImagePreview.jsx";
-import { isImage } from "../components/FileIcon.jsx";
+import { isImage, resolveKind } from "../components/FileIcon.jsx";
 import UploadProgress from "../components/UploadProgress.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { useApi } from "../hooks/useApi.js";
+import { sizeOf } from "../lib/format.js";
 
 const FOLDER_ID = "root";
+const VIEW_KEY = "bahia:view";
+const DOC_KINDS = new Set(["PDF", "DOC", "XLS", "TXT"]);
+
+/** La vista elegida es una comodidad local; si el navegador la bloquea, da igual. */
+function readStoredView() {
+  try {
+    return localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list";
+  } catch {
+    return "list";
+  }
+}
+
+const SORTERS = {
+  fileName: (a, b) => (a.fileName || "").localeCompare(b.fileName || "", "es"),
+  createdAt: (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
+  // Los archivos sin tamaño conocido caen siempre al final, en ambos sentidos.
+  size: (a, b) => (sizeOf(a) ?? -1) - (sizeOf(b) ?? -1),
+};
+
+function ViewToggle({ view, onChange }) {
+  const options = [
+    { id: "list", label: "Lista" },
+    { id: "grid", label: "Rejilla" },
+  ];
+  return (
+    <div className="flex rounded-[3px] border border-line p-[2px]">
+      {options.map((option) => (
+        <button
+          key={option.id}
+          type="button"
+          onClick={() => onChange(option.id)}
+          aria-pressed={view === option.id}
+          className={`rounded-[2px] px-2.5 py-1 text-[12px] leading-none transition-colors ${
+            view === option.id ? "bg-raise text-text" : "text-faint hover:text-dim"
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function DrivePage() {
   const api = useApi();
@@ -19,11 +61,17 @@ export default function DrivePage() {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [upload, setUpload] = useState(null); // { fileName, progress, previewUrl }
+  const [upload, setUpload] = useState(null); // { fileName, progress, previewUrl, position, total }
   const [busyFileId, setBusyFileId] = useState(null);
   const [previewUrls, setPreviewUrls] = useState({}); // fileId -> URL firmada
   const [lightbox, setLightbox] = useState(null);
+  const [view, setView] = useState(readStoredView);
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState({ key: "createdAt", dir: "desc" });
+  const [dragging, setDragging] = useState(false);
+
   const uploadPreviewRef = useRef(null);
+  const dragDepth = useRef(0);
 
   // Revoca el object URL del preview local al desmontar.
   useEffect(
@@ -32,6 +80,14 @@ export default function DrivePage() {
     },
     []
   );
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(VIEW_KEY, view);
+    } catch {
+      // Sin persistencia; la vista simplemente vuelve a "lista" al recargar.
+    }
+  }, [view]);
 
   const refresh = useCallback(
     async ({ silent = false } = {}) => {
@@ -86,7 +142,52 @@ export default function DrivePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files]);
 
-  const handleUpload = async (file) => {
+  const stats = useMemo(() => {
+    let images = 0;
+    let docs = 0;
+    let bytes = 0;
+    let sized = 0;
+
+    for (const file of files) {
+      const kind = resolveKind(file.fileType, file.fileName).label;
+      if (kind === "IMG") images += 1;
+      else if (DOC_KINDS.has(kind)) docs += 1;
+
+      const size = sizeOf(file);
+      if (size !== null) {
+        bytes += size;
+        sized += 1;
+      }
+    }
+
+    return {
+      count: files.length,
+      images,
+      docs,
+      others: files.length - images - docs,
+      // Si el backend no devuelve tamaños no inventamos un total de cero.
+      bytes: sized ? bytes : null,
+    };
+  }, [files]);
+
+  const visible = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    const filtered = needle
+      ? files.filter((file) => (file.fileName || "").toLowerCase().includes(needle))
+      : files;
+
+    const sorted = [...filtered].sort(SORTERS[sort.key] ?? SORTERS.createdAt);
+    return sort.dir === "desc" ? sorted.reverse() : sorted;
+  }, [files, query, sort]);
+
+  const handleSort = (key) =>
+    setSort((current) =>
+      current.key === key
+        ? { key, dir: current.dir === "asc" ? "desc" : "asc" }
+        : { key, dir: key === "fileName" ? "asc" : "desc" }
+    );
+
+  const uploadOne = async (file, position, total) => {
     const fileType = file.type || "application/octet-stream";
 
     if (uploadPreviewRef.current) URL.revokeObjectURL(uploadPreviewRef.current);
@@ -98,29 +199,48 @@ export default function DrivePage() {
       fileName: file.name,
       progress: 0,
       previewUrl: uploadPreviewRef.current,
+      position,
+      total,
     });
-    try {
-      const { uploadUrl } = await api.getUploadUrl({
-        fileName: file.name,
-        fileType,
-        folderId: FOLDER_ID,
-      });
 
-      if (!uploadUrl) throw new Error("El backend no devolvió una URL de subida.");
+    const { uploadUrl } = await api.getUploadUrl({
+      fileName: file.name,
+      fileType,
+      folderId: FOLDER_ID,
+    });
 
-      await api.uploadToS3(uploadUrl, file, fileType, (progress) =>
-        setUpload((current) => (current ? { ...current, progress } : current))
+    if (!uploadUrl) throw new Error("El backend no devolvió una URL de subida.");
+
+    await api.uploadToS3(uploadUrl, file, fileType, (progress) =>
+      setUpload((current) => (current ? { ...current, progress } : current))
+    );
+  };
+
+  /** Cola secuencial: un fallo no cancela los archivos que quedan. */
+  const handleUpload = async (incoming) => {
+    const queue = Array.from(incoming ?? []);
+    if (!queue.length) return;
+
+    let done = 0;
+
+    for (const [index, file] of queue.entries()) {
+      try {
+        await uploadOne(file, index + 1, queue.length);
+        done += 1;
+      } catch (err) {
+        if (err?.status === 401 || err?.status === 403) break;
+        toast.error(`«${file.name}»: ${err?.message || "no se pudo subir."}`);
+      }
+    }
+
+    setUpload(null);
+
+    if (done) {
+      toast.success(
+        done === 1 ? `«${queue[0].name}» subido` : `${done} archivos subidos`
       );
-
-      toast.success(`«${file.name}» subido correctamente`);
       setPreviewUrls({});
       await refresh({ silent: true });
-    } catch (err) {
-      if (err?.status !== 401 && err?.status !== 403) {
-        toast.error(err?.message || "No se pudo subir el archivo.");
-      }
-    } finally {
-      setUpload(null);
     }
   };
 
@@ -140,9 +260,6 @@ export default function DrivePage() {
   };
 
   const handleDelete = async (file) => {
-    if (!window.confirm(`¿Eliminar «${file.fileName}»? Esta acción no se puede deshacer.`))
-      return;
-
     setBusyFileId(file.fileId);
     try {
       await api.deleteFile(file.fileId);
@@ -152,7 +269,7 @@ export default function DrivePage() {
         delete next[file.fileId];
         return next;
       });
-      toast.success("Archivo eliminado");
+      toast.success(`«${file.fileName}» eliminado`);
     } catch (err) {
       if (err?.status !== 401 && err?.status !== 403) {
         toast.error(err?.message || "No se pudo eliminar el archivo.");
@@ -162,79 +279,119 @@ export default function DrivePage() {
     }
   };
 
+  // dragenter/dragleave se disparan también al cruzar hijos: contamos la
+  // profundidad para no apagar el resalte antes de tiempo.
+  const dragHandlers = {
+    onDragEnter: (event) => {
+      if (!event.dataTransfer?.types?.includes("Files")) return;
+      dragDepth.current += 1;
+      setDragging(true);
+    },
+    onDragOver: (event) => {
+      if (event.dataTransfer?.types?.includes("Files")) event.preventDefault();
+    },
+    onDragLeave: () => {
+      dragDepth.current = Math.max(0, dragDepth.current - 1);
+      if (!dragDepth.current) setDragging(false);
+    },
+    onDrop: (event) => {
+      if (!event.dataTransfer?.files?.length) return;
+      event.preventDefault();
+      dragDepth.current = 0;
+      setDragging(false);
+      if (!upload) handleUpload(event.dataTransfer.files);
+    },
+  };
+
   return (
-    <div className="grain min-h-screen bg-paper">
-      <Header />
+    <div className="flex min-h-screen">
+      <Backdrop />
 
-      <main className="mx-auto max-w-6xl px-6 pb-24 pt-12 lg:px-10 lg:pt-16">
-        <div className="flex flex-wrap items-end justify-between gap-8">
-          <div>
-            <p className="label reveal text-ink/40">Índice general</p>
-            <h1
-              className="reveal mt-3 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-[0.95]"
-              style={{ animationDelay: "60ms" }}
-            >
-              Mis archivos
-            </h1>
-          </div>
+      <Rail stats={stats} onUpload={handleUpload} uploading={Boolean(upload)} />
 
-          <div
-            className="reveal flex items-center gap-6"
-            style={{ animationDelay: "120ms" }}
-          >
-            <Button
-              variant="ghost"
+      <div className="flex min-w-0 flex-1 flex-col">
+        <MobileBar onUpload={handleUpload} uploading={Boolean(upload)} />
+
+        <div className="sticky top-14 z-20 border-b border-line bg-void/80 backdrop-blur-md lg:top-0">
+          <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
+            <div className="flex min-w-0 items-baseline gap-2.5">
+              <h1 className="text-[15px] font-semibold tracking-[-0.015em]">Archivos</h1>
+              <span className="mono text-[11px] text-faint">
+                {loading ? "···" : `${visible.length}/${stats.count}`}
+              </span>
+            </div>
+
+            <div className="relative ml-auto w-full max-w-[240px]">
+              <span
+                aria-hidden
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[12px] text-faint"
+              >
+                ⌕
+              </span>
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Filtrar por nombre"
+                aria-label="Filtrar por nombre"
+                className="h-8 w-full rounded-[3px] border border-line bg-panel pl-7 pr-2 text-[13px] outline-none transition-colors placeholder:text-faint/70 hover:border-edge focus:border-signal focus-visible:outline-none"
+              />
+            </div>
+
+            <div className="hidden sm:block">
+              <ViewToggle view={view} onChange={setView} />
+            </div>
+
+            <button
+              type="button"
               onClick={() => refresh()}
               disabled={loading || Boolean(upload)}
+              title="Recargar la lista"
+              className="shrink-0 rounded-[3px] px-2 py-1.5 text-[12.5px] leading-none text-dim transition-colors hover:bg-raise hover:text-text disabled:pointer-events-none disabled:text-faint/60"
             >
-              Actualizar
-            </Button>
-            <FileUploadButton onSelect={handleUpload} disabled={Boolean(upload)} />
+              Recargar
+            </button>
           </div>
         </div>
 
-        <div
-          className="rule-in mt-10 flex items-baseline justify-between gap-6 border-t border-ink pt-3"
-          style={{ animationDelay: "200ms" }}
+        <main
+          {...dragHandlers}
+          className="relative flex-1 px-4 pb-16 pt-5 lg:px-6"
         >
-          <span className="label text-ink/45">
-            {loading
-              ? "Cargando"
-              : `${files.length} ${files.length === 1 ? "elemento" : "elementos"}`}
-          </span>
-          <span className="label hidden text-ink/30 sm:inline">
-            s3-media-uploads
-          </span>
-        </div>
+          {dragging && (
+            <div className="pointer-events-none absolute inset-3 z-10 grid place-items-center rounded-[5px] border-2 border-dashed border-signal bg-signal/[0.06]">
+              <p className="tag text-signal">Suelta para subir</p>
+            </div>
+          )}
 
-        {upload && (
-          <div className="mt-8">
-            <UploadProgress
-              fileName={upload.fileName}
-              progress={upload.progress}
-              previewUrl={upload.previewUrl}
-            />
-          </div>
-        )}
+          {upload && (
+            <div className="mb-5">
+              <UploadProgress {...upload} />
+            </div>
+          )}
 
-        {error && (
-          <div className="mt-8">
-            <ErrorMessage>{error}</ErrorMessage>
-          </div>
-        )}
+          {error && (
+            <div className="mb-5">
+              <ErrorMessage>{error}</ErrorMessage>
+            </div>
+          )}
 
-        <div className="mt-8">
           <FileList
-            files={files}
+            files={visible}
             loading={loading}
+            view={view}
+            sort={sort}
+            onSort={handleSort}
+            query={query}
+            onClearQuery={() => setQuery("")}
             busyFileId={busyFileId}
             previewUrls={previewUrls}
             onPreview={setLightbox}
             onDownload={handleDownload}
             onDelete={handleDelete}
           />
-        </div>
-      </main>
+        </main>
+      </div>
 
       <ImagePreview
         file={lightbox}

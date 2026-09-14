@@ -1,15 +1,27 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Bahía — panel de instrumentos.
+   Fondo grafito frío, texto cálido, un único color de señal (ámbar) reservado
+   para el estado activo. La tipografía es funcional: una grotesca con carácter
+   (Familjen) para la interfaz y una monoespaciada (Spline Sans Mono) para todo
+   lo que es dato tabulable — tamaños, fechas, tipos, contadores.
+--------------------------------------------------------------------------- */
+
 @theme {
-  --color-ink: #0d0d0c;
-  --color-paper: #f4f3ef;
-  --color-chalk: #ffffff;
+  --color-void: #0b0c0e;
+  --color-panel: #101216;
+  --color-raise: #171a1f;
+  --color-line: #23272e;
+  --color-edge: #333942;
+  --color-text: #e9e6e0;
+  --color-dim: #98a0ab;
+  --color-faint: #626a75;
+  --color-signal: #f0b429;
+  --color-alert: #e0574f;
 
-  --font-display: "Instrument Serif", "Times New Roman", serif;
-  --font-sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
-
-  --radius-none: 0px;
+  --font-ui: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Spline Sans Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 html,
@@ -19,41 +31,63 @@ body,
 }
 
 body {
-  background-color: var(--color-paper);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
-  font-feature-settings: "ss01", "cv01";
+  background-color: var(--color-void);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background: var(--color-ink);
-  color: var(--color-paper);
+  background: var(--color-signal);
+  color: var(--color-void);
 }
 
-/* Grano: textura de papel sobre toda la página, nunca intercepta el cursor. */
-.grain::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  pointer-events: none;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-edge) transparent;
 }
 
-/* Etiqueta tipográfica recurrente: mono, versalitas, tracking abierto. */
-.label {
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-edge);
+  border: 3px solid var(--color-void);
+  border-radius: 99px;
+}
+
+/* Un solo anillo de foco para toda la app, en el color de señal. */
+:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 2px;
+}
+
+/* Dato monoespaciado: cifras de ancho fijo y cero con barra, para que las
+   columnas de tamaño y fecha se alineen verticalmente sin trucos. */
+.mono {
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.18em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "zero" 1;
+}
+
+/* Etiqueta de sección. Tracking contenido: las versalitas muy abiertas se
+   leen como decoración, no como jerarquía. */
+.tag {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
-@keyframes reveal {
+@keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -61,37 +95,63 @@ body {
   }
 }
 
-@keyframes rule {
-  from {
-    transform: scaleX(0);
+@keyframes sweep {
+  0% {
+    transform: translateX(-100%);
   }
-  to {
-    transform: scaleX(1);
+  100% {
+    transform: translateX(400%);
   }
 }
 
-.reveal {
-  animation: reveal 0.75s cubic-bezier(0.16, 0.84, 0.24, 1) both;
+@keyframes blink {
+  50% {
+    opacity: 0.25;
+  }
 }
 
-.rule-in {
-  transform-origin: left;
-  animation: rule 0.9s cubic-bezier(0.16, 0.84, 0.24, 1) both;
+/* Entrada rápida y escalonada, sólo en las filas de la lista. El retardo se
+   pasa por variable para no repetir estilos en línea con valores mágicos. */
+.rise {
+  animation: rise 0.34s cubic-bezier(0.22, 0.8, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 22ms);
+}
+
+.sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 25%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-signal) 55%, transparent),
+    transparent
+  );
+  animation: sweep 1.15s ease-in-out infinite;
+}
+
+.blink {
+  animation: blink 1.4s steps(1, end) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal,
-  .rule-in {
+  .rise,
+  .sweep::after,
+  .blink {
     animation: none;
+  }
+  .rise {
+    opacity: 1;
   }
 }
 
-/* Chrome pinta de azul los campos autocompletados; lo devolvemos al papel. */
+/* Chrome pinta de azul los campos autocompletados; lo devolvemos al panel. */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--color-ink);
-  -webkit-box-shadow: 0 0 0 1000px var(--color-paper) inset;
-  caret-color: var(--color-ink);
+  -webkit-text-fill-color: var(--color-text);
+  -webkit-box-shadow: 0 0 0 1000px var(--color-panel) inset;
+  caret-color: var(--color-signal);
   transition: background-color 9999s ease-in-out 0s;
 }

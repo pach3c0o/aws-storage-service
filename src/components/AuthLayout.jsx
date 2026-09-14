@@ -1,83 +1,80 @@
 import { Link } from "react-router-dom";
+import { config } from "../config.js";
+import Backdrop from "./Backdrop.jsx";
+
+const STEPS = ["Acceso", "Registro", "Verificación"];
+
+/** Indicador de paso: tres segmentos, el activo en el color de señal. */
+function Steps({ step }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex gap-1" aria-hidden>
+        {STEPS.map((label, index) => (
+          <span
+            key={label}
+            className={`h-[3px] w-6 rounded-full transition-colors ${
+              index + 1 === step ? "bg-signal" : "bg-line"
+            }`}
+          />
+        ))}
+      </div>
+      <span className="tag text-faint">
+        {String(step).padStart(2, "0")} · {STEPS[step - 1]}
+      </span>
+    </div>
+  );
+}
 
 /**
- * Composición a dos columnas: manifiesto tipográfico en tinta a la izquierda,
- * formulario sobre papel a la derecha. En móvil el panel se reduce a cabecera.
+ * Un único panel centrado sobre el fondo de la app, con la ficha técnica del
+ * backend debajo: es la misma información que la barra lateral muestra una vez
+ * dentro, así que la sesión empieza y sigue en el mismo sistema visual.
  */
-export default function AuthLayout({ index, title, subtitle, children, footer }) {
+export default function AuthLayout({ step, title, subtitle, children, footer }) {
   return (
-    <div className="grain min-h-screen bg-paper lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-      <aside className="relative flex flex-col justify-between overflow-hidden bg-ink px-8 py-10 text-paper lg:px-14 lg:py-16">
-        <Link to="/" className="label reveal text-paper/60 transition hover:text-paper">
-          Archivo
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
+      <Backdrop />
+
+      <div className="w-full max-w-[420px]">
+        <Link
+          to="/login"
+          className="mb-7 inline-flex items-center gap-2.5 rounded-[3px] transition-opacity hover:opacity-80"
+        >
+          <span
+            aria-hidden
+            className="grid h-7 w-7 place-items-center rounded-[3px] bg-signal text-[15px] font-bold leading-none text-void"
+          >
+            B
+          </span>
+          <span className="text-[17px] font-semibold leading-none tracking-[-0.02em]">Bahía</span>
         </Link>
 
-        <div className="hidden lg:block">
-          <p
-            className="reveal font-display text-[clamp(3rem,5vw,5.25rem)] leading-[0.92]"
-            style={{ animationDelay: "80ms" }}
-          >
-            Todo lo que
-            <br />
-            guardas,
-            <br />
-            <em className="italic text-paper/70">en orden.</em>
-          </p>
-          <div
-            className="rule-in mt-10 h-px w-24 bg-paper/30"
-            style={{ animationDelay: "260ms" }}
-          />
-          <p
-            className="reveal mt-6 max-w-xs text-sm leading-relaxed text-paper/50"
-            style={{ animationDelay: "320ms" }}
-          >
-            Almacenamiento cifrado sobre S3. Tus claves nunca tocan el disco
-            del navegador.
-          </p>
-        </div>
+        <div className="rounded-[5px] border border-line bg-panel/70 p-6 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)] backdrop-blur-sm sm:p-7">
+          <Steps step={step} />
 
-        <p className="label hidden text-paper/30 lg:block">
-          {index} — Amazon Web Services
-        </p>
-      </aside>
-
-      <main className="flex items-center justify-center px-6 py-14 lg:px-16">
-        <div className="w-full max-w-sm">
-          <p className="label reveal text-ink/40">{index}</p>
-          <h1
-            className="reveal mt-3 font-display text-[clamp(2.25rem,4vw,3rem)] leading-[1.02]"
-            style={{ animationDelay: "60ms" }}
-          >
+          <h1 className="mt-5 text-[24px] font-semibold leading-[1.15] tracking-[-0.025em]">
             {title}
           </h1>
           {subtitle && (
-            <p
-              className="reveal mt-3 text-sm leading-relaxed text-ink/50"
-              style={{ animationDelay: "110ms" }}
-            >
-              {subtitle}
-            </p>
+            <p className="mt-2 text-[13.5px] leading-relaxed text-dim">{subtitle}</p>
           )}
 
-          <div
-            className="rule-in mt-8 h-px w-full bg-ink/15"
-            style={{ animationDelay: "180ms" }}
-          />
-
-          <div className="reveal mt-8" style={{ animationDelay: "200ms" }}>
-            {children}
-          </div>
-
-          {footer && (
-            <p
-              className="reveal mt-10 text-sm text-ink/50"
-              style={{ animationDelay: "280ms" }}
-            >
-              {footer}
-            </p>
-          )}
+          <div className="mt-7">{children}</div>
         </div>
-      </main>
+
+        {footer && <p className="mt-5 text-center text-[13px] text-dim">{footer}</p>}
+
+        <dl className="mono mt-8 grid grid-cols-2 gap-x-6 gap-y-2 border-t border-line pt-4 text-[10.5px] text-faint">
+          <div className="flex justify-between gap-2">
+            <dt>región</dt>
+            <dd className="truncate text-dim">{config.cognito.region}</dd>
+          </div>
+          <div className="flex justify-between gap-2">
+            <dt>pool</dt>
+            <dd className="truncate text-dim">{config.cognito.userPoolId}</dd>
+          </div>
+        </dl>
+      </div>
     </div>
   );
 }

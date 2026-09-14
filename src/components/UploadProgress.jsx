@@ -1,32 +1,33 @@
-export default function UploadProgress({ fileName, progress, previewUrl }) {
+export default function UploadProgress({ fileName, progress, previewUrl, position, total }) {
   return (
-    <div className="reveal border-y border-ink/15 py-5">
-      <div className="flex items-center gap-5">
+    <div className="rounded-[4px] border border-line bg-panel/70 p-3">
+      <div className="flex items-center gap-3">
         {previewUrl ? (
           <img
             src={previewUrl}
-            alt={fileName}
-            className="h-14 w-14 shrink-0 object-cover grayscale"
+            alt=""
+            className="h-11 w-11 shrink-0 rounded-[3px] border border-line object-cover"
           />
         ) : (
-          <div className="h-14 w-14 shrink-0 border border-ink/20" />
+          <div className="h-11 w-11 shrink-0 rounded-[3px] border border-line bg-void/60" />
         )}
 
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-4">
-            <p className="truncate text-sm">
-              <span className="label mr-3 text-ink/40">Subiendo</span>
+            <p className="min-w-0 truncate text-[13.5px]">
+              <span className="tag mr-2 text-signal">
+                Subiendo{total > 1 ? ` ${position}/${total}` : ""}
+              </span>
               {fileName}
             </p>
-            <span className="shrink-0 font-mono text-2xl leading-none tabular-nums">
-              {String(progress).padStart(2, "0")}
-              <span className="text-ink/35">%</span>
+            <span className="mono shrink-0 text-[13px] text-signal">
+              {String(progress).padStart(3, " ")}%
             </span>
           </div>
 
-          <div className="mt-4 h-px w-full bg-ink/15">
+          <div className="mt-3 h-[3px] w-full overflow-hidden rounded-full bg-line">
             <div
-              className="h-px bg-ink transition-[width] duration-200 ease-out"
+              className="h-full rounded-full bg-signal transition-[width] duration-200 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>

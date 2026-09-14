@@ -1,28 +1,40 @@
 import { useRef } from "react";
 
-export default function FileUploadButton({ onSelect, disabled }) {
+/** Entrega siempre un array: el resto del flujo trata la subida como una cola. */
+export default function FileUploadButton({ onSelect, disabled, compact = false }) {
   const inputRef = useRef(null);
 
   const handleChange = (event) => {
-    const file = event.target.files?.[0];
+    const files = Array.from(event.target.files ?? []);
     // Reseteamos el input para poder volver a subir el mismo archivo.
     event.target.value = "";
-    if (file) onSelect(file);
+    if (files.length) onSelect(files);
   };
 
   return (
     <>
-      <input ref={inputRef} type="file" className="hidden" onChange={handleChange} />
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={handleChange}
+      />
       <button
         type="button"
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
-        className="label group inline-flex items-center gap-3 bg-ink px-5 py-3.5 text-paper transition-all duration-200 hover:bg-ink/85 focus:outline-none focus-visible:ring-1 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:bg-ink/25"
+        className={`group inline-flex select-none items-center justify-center gap-2 rounded-[3px] bg-signal font-semibold leading-none tracking-[-0.005em] text-void transition-[background-color,transform] duration-150 hover:bg-signal/90 active:translate-y-px disabled:cursor-not-allowed disabled:bg-edge disabled:text-faint disabled:active:translate-y-0 ${
+          compact ? "h-8 px-3 text-[12.5px]" : "h-10 w-full px-4 text-[13.5px]"
+        }`}
       >
-        <span className="text-sm leading-none transition-transform duration-300 group-hover:rotate-90">
+        <span
+          aria-hidden
+          className="text-[15px] leading-none transition-transform duration-300 group-hover:rotate-90 group-disabled:rotate-0"
+        >
           +
         </span>
-        Subir archivo
+        Subir archivos
       </button>
     </>
   );

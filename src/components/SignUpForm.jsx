@@ -38,7 +38,7 @@ export default function SignUpForm() {
 
   return (
     <AuthLayout
-      index="02 / Registro"
+      step={2}
       title="Crea tu cuenta"
       subtitle="Te enviaremos un código de verificación por email."
       footer={
@@ -46,14 +46,14 @@ export default function SignUpForm() {
           ¿Ya tienes cuenta?{" "}
           <Link
             to="/login"
-            className="text-ink underline decoration-ink/30 underline-offset-4 transition hover:decoration-ink"
+            className="rounded-[3px] text-signal transition-opacity hover:opacity-75"
           >
             Inicia sesión
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <Field
           label="Email"
           type="email"

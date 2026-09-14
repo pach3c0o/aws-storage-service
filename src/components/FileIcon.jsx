@@ -1,6 +1,7 @@
 /**
- * En un sistema monocromo el tipo de archivo no se codifica por color, sino
- * por una sigla en versalitas dentro de un cuadro de línea capilar.
+ * El tipo se codifica con una sigla de tres letras, no con color: en una tabla
+ * densa la sigla se lee igual de rápido, se alinea con el resto del dato
+ * monoespaciado y deja el ámbar libre para marcar estado.
  */
 const KINDS = [
   { test: (t) => t.startsWith("image/"), label: "IMG" },
@@ -36,7 +37,7 @@ export default function FileIcon({ fileType, fileName, className = "" }) {
   const kind = resolveKind(fileType, fileName);
   return (
     <div
-      className={`flex h-11 w-11 shrink-0 items-center justify-center border border-ink/20 font-mono text-[10px] tracking-widest text-ink/55 ${className}`}
+      className={`mono flex shrink-0 items-center justify-center rounded-[3px] border border-line bg-panel text-[10px] font-medium tracking-[0.06em] text-dim ${className}`}
     >
       {kind.label}
     </div>
