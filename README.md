@@ -1,4 +1,4 @@
-# Bahía — Frontend (React + Vite + Cognito + S3)
+# Gestor de archivos — Frontend (React + Vite + Cognito + S3)
 
 Gestor de archivos tipo Google Drive que consume un backend serverless en AWS
 (API Gateway + Lambda + S3), con autenticación Cognito.
@@ -12,8 +12,8 @@ Node 18+.
 ```bash
 npm install
 npm run dev     # http://localhost:3000  (puerto fijo: es la callback URL registrada en Cognito)
-npm run build   # genera dist/
-npm run preview # sirve dist/ en :3000
+npm run build  
+npm run preview 
 ```
 
 ## Configuración
